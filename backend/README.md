@@ -6,6 +6,8 @@ Modular FastAPI backend that implements the helloEx pipeline:
 - **/stt/upload** – Whisper speech-to-text (mock or local)
 - **/tts/speak** – ElevenLabs text-to-speech (real if configured, else dummy WAV)
 - **/memory/upload** – store text memos and build a simple vector memory
+- **/ingest/upload** – upload text/json/audio/image files, clean & ingest into memory (RAG)
+- **/finetune/start**, **/finetune/status/{job_id}** – start a finetune job and poll status (mock)
 - **/export** – download a zip containing messages and any audio artifacts
 - **/health** – heartbeat
 
@@ -67,6 +69,23 @@ curl -s -F file=@/path/to/audio.wav http://localhost:8000/stt/upload | jq
 curl -s http://localhost:8000/tts/speak \
   -H "Content-Type: application/json" \
   -d '{"text":"It\'s okay to move on."}' | jq
+```
+
+- Ingest files (RAG memory):
+
+```bash
+curl -s -F files=@/path/to/chats.txt \
+         -F files=@/path/to/export.json \
+         -F source=whatsapp \
+         -F tags="nostalgia,trip" \
+         http://localhost:8000/ingest/upload | jq
+```
+
+- Finetune (mock):
+
+```bash
+JOB=$(curl -s http://localhost:8000/finetune/start -H "Content-Type: application/json" -d '{"dataset_hint":"memory"}' | jq -r .job_id)
+curl -s http://localhost:8000/finetune/status/$JOB | jq
 ```
 
 - Memory upload:

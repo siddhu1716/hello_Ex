@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import JSONResponse
 from routers import chat, stt, tts, memory
+from routers import ingest, finetune
 from config import settings
 
 app = FastAPI(title="helloEx Backend", version="0.1.0")
@@ -23,6 +24,8 @@ app.include_router(chat.router, prefix="", tags=["chat"])
 app.include_router(stt.router, prefix="", tags=["stt"])
 app.include_router(tts.router, prefix="", tags=["tts"])
 app.include_router(memory.router, prefix="", tags=["memory"])
+app.include_router(ingest.router, prefix="", tags=["ingest"])
+app.include_router(finetune.router, prefix="", tags=["finetune"])
 
 # Serve static files from storage directory so /static/audio works
 app.mount("/static", StaticFiles(directory=settings.DATA_DIR), name="static")
