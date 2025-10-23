@@ -19,6 +19,7 @@ Modular FastAPI backend that implements the helloEx pipeline:
 - `services/` – integrations (`ai_service.py`, `whisper_service.py`, `eleven_service.py`, `embedding_service.py`)
 - `utils/` – helpers (`text_utils.py`, `audio_utils.py`)
 - `data/storage/` – persisted files: `messages.jsonl`, `memory.jsonl`, `audio/*`, `exports/*`
+- Vector store (pluggable): file JSONL (default) or ChromaDB or Milvus
 
 ## Quickstart
 
@@ -39,6 +40,13 @@ Copy `.env.example` to `.env` and set values as needed. Or export env vars direc
 - vLLM (OpenAI-compatible): `OPENAI_BASE_URL`, `OPENAI_API_KEY`, `OPENAI_MODEL`
 - Whisper: `WHISPER_MODE=mock` (default) or `local` (requires `whisper`)
 - ElevenLabs: `ELEVEN_API_KEY`, `ELEVEN_VOICE_ID`
+
+- Retrieval & Memory:
+  - `RETRIEVAL_ENABLED=true`
+  - `VECTOR_BACKEND=file|chroma|milvus`
+  - `HISTORY_MESSAGES=6`
+  - ChromaDB: `CHROMA_DIR=./backend/data/chroma`, `EMBEDDING_MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2`
+  - Milvus: `MILVUS_HOST`, `MILVUS_PORT`, optional `MILVUS_USER`, `MILVUS_PASSWORD`, `MILVUS_DB`, `MILVUS_COLLECTION`, `MILVUS_INDEX_TYPE`, `MILVUS_METRIC_TYPE`
 
 4. Run dev server:
 
@@ -107,3 +115,12 @@ curl -s -o helloex_export.zip http://localhost:8000/export
 - If no model is configured, `/chat` returns a sensible mock reply and can still produce TTS (dummy WAV).
 - If ElevenLabs is not configured, TTS returns a generated dummy WAV file mounted under `/static/audio/...`.
 - Whisper `local` mode requires the `whisper` package and local model; otherwise `mock` mode returns a fixed transcript.
+- Retrieval uses the active vector backend configured via `VECTOR_BACKEND`. Ingestion populates that backend and `/chat` performs top-k retrieval (if `RETRIEVAL_ENABLED=true`) and also includes the last `HISTORY_MESSAGES` from `messages.jsonl` as conversational buffer.
+
+## Retrieval Backends
+
+- File (default): simple JSONL at `data/storage/memory.jsonl` with naive cosine similarity over `utils.text_utils.simple_embed()`.
+- ChromaDB: embedded persistent vector DB using sentence-transformers. Enable with `VECTOR_BACKEND=chroma`. Install extras from `requirements.txt`.
+- Milvus: scalable vector DB. Enable with `VECTOR_BACKEND=milvus` and set connection vars. Collection and index are auto-created on startup.
+
+See `docs/retrieval_memory_flow.md` for an end-to-end diagram and request flow details.

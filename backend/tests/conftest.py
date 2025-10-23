@@ -22,6 +22,17 @@ def client(tmp_path):
     # Force mock modes to avoid external dependencies
     os.environ["WHISPER_MODE"] = "mock"
     settings.WHISPER_MODE = "mock"
+    # Use file backend memory store pointing to temp path and disable retrieval
+    os.environ["VECTOR_BACKEND"] = "file"
+    settings.VECTOR_BACKEND = "file"
+    os.environ["RETRIEVAL_ENABLED"] = "false"
+    settings.RETRIEVAL_ENABLED = False
+    # Rebind memory_store to point at the temp file
+    try:
+        from services import embedding_service
+        embedding_service.memory_store = embedding_service._FileMemoryStore(settings.MEMORY_FILE)
+    except Exception:
+        pass
     os.environ.pop("ELEVEN_API_KEY", None)
 
     return TestClient(app)

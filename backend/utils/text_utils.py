@@ -41,3 +41,24 @@ def append_message(role: str, content: str) -> None:
     rec = {"role": role, "content": content}
     with open(settings.MESSAGES_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps(rec) + "\n")
+
+
+def get_recent_messages(n: int) -> List[dict]:
+    """Read the last n JSONL messages from the messages file."""
+    path = settings.MESSAGES_FILE
+    if not os.path.exists(path) or n <= 0:
+        return []
+    msgs: List[dict] = []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.readlines()[-n:]
+        for ln in lines:
+            try:
+                obj = json.loads(ln)
+                if isinstance(obj, dict) and "role" in obj and "content" in obj:
+                    msgs.append(obj)
+            except Exception:
+                continue
+    except Exception:
+        return []
+    return msgs

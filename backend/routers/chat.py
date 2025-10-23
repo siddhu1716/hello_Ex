@@ -5,7 +5,8 @@ from pydantic import BaseModel
 from services.ai_service import ai_service
 from services.embedding_service import memory_store
 from services.eleven_service import tts_service
-from utils.text_utils import sanitize_text, build_prompt, append_message
+from utils.text_utils import sanitize_text, build_prompt, append_message, get_recent_messages
+from config import settings
 
 router = APIRouter()
 
@@ -32,10 +33,22 @@ async def chat(req: ChatRequest):
     # persist user message
     append_message("user", user_text)
 
-    # retrieve naive top-k memories
-    memories: List[str] = memory_store.retrieve(user_text, top_k=5)
+    # retrieval toggle
+    memories: List[str] = []
+    if settings.RETRIEVAL_ENABLED:
+        memories = memory_store.retrieve(user_text, top_k=5)
 
-    prompt = build_prompt(persona=req.persona or "default", context_memories=memories, user_input=user_text)
+    # recent conversation history
+    history_items = get_recent_messages(settings.HISTORY_MESSAGES)
+    history_lines: List[str] = [f"{m['role']}: {m['content']}" for m in history_items]
+    context: List[str] = []
+    if history_lines:
+        context.append("Recent conversation:")
+        context.extend(history_lines)
+        context.append("")
+    context.extend(memories)
+
+    prompt = build_prompt(persona=req.persona or "default", context_memories=context, user_input=user_text)
 
     reply_text, sentiment = await ai_service.generate_reply(prompt)
     # persist assistant reply
