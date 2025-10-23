@@ -1,3 +1,7 @@
+ - Finetuning:
+   - `FINETUNE_ENABLED=false` (set to true to run real LoRA SFT if training deps installed)
+   - `FINETUNE_OUTPUT_DIR=./backend/data/finetune_outputs`
+   - `FINETUNE_DEFAULT_MODEL=mistralai/Mistral-7B-Instruct-v0.2`
 # helloEx Backend (FastAPI)
 
 Modular FastAPI backend that implements the helloEx pipeline:
@@ -8,6 +12,7 @@ Modular FastAPI backend that implements the helloEx pipeline:
 - **/memory/upload** – store text memos and build a simple vector memory
 - **/ingest/upload** – upload text/json/audio/image files, clean & ingest into memory (RAG)
 - **/finetune/start**, **/finetune/status/{job_id}** – start a finetune job and poll status (mock)
+- **/finetune/whatsapp** – upload WhatsApp .txt export and trigger a background finetune job (mock by default; real if enabled)
 - **/export** – download a zip containing messages and any audio artifacts
 - **/health** – heartbeat
 
@@ -95,6 +100,19 @@ curl -s -F files=@/path/to/chats.txt \
 JOB=$(curl -s http://localhost:8000/finetune/start -H "Content-Type: application/json" -d '{"dataset_hint":"memory"}' | jq -r .job_id)
 curl -s http://localhost:8000/finetune/status/$JOB | jq
 ```
+
+- Finetune from WhatsApp export (upload .txt):
+
+```bash
+curl -s -F file=@/path/to/whatsapp.txt \
+         -F user_of_interest="Sam" \
+         -F model_name="mistralai/Mistral-7B-Instruct-v0.2" \
+         -F epochs=1 -F lr=2e-4 -F max_seq_len=512 \
+         -F lora_r=16 -F lora_alpha=32 -F lora_dropout=0.1 \
+         http://localhost:8000/finetune/whatsapp | jq
+```
+
+By default, jobs run in mock mode and complete quickly. To enable real training, set `FINETUNE_ENABLED=true` and install training deps listed in `requirements.txt` (transformers, trl, peft, accelerate, bitsandbytes). Heavy training requires proper GPU setup.
 
 - Memory upload:
 

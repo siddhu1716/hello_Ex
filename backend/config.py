@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     MILVUS_INDEX_TYPE: str = os.getenv("MILVUS_INDEX_TYPE", "HNSW")
     MILVUS_METRIC_TYPE: str = os.getenv("MILVUS_METRIC_TYPE", "IP")
 
+    # Finetuning
+    FINETUNE_ENABLED: bool = os.getenv("FINETUNE_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
+    FINETUNE_OUTPUT_DIR: str = os.getenv("FINETUNE_OUTPUT_DIR", os.path.join(os.path.dirname(__file__), "data", "finetune_outputs"))
+    FINETUNE_DEFAULT_MODEL: str = os.getenv("FINETUNE_DEFAULT_MODEL", "mistralai/Mistral-7B-Instruct-v0.2")
+
 
 settings = Settings()
 
@@ -63,3 +68,4 @@ os.makedirs(settings.DATA_DIR, exist_ok=True)
 os.makedirs(settings.AUDIO_DIR, exist_ok=True)
 os.makedirs(settings.EXPORT_DIR, exist_ok=True)
 os.makedirs(getattr(settings, "CHROMA_DIR", os.path.join(os.path.dirname(__file__), "data", "chroma")), exist_ok=True)
+os.makedirs(settings.FINETUNE_OUTPUT_DIR, exist_ok=True)

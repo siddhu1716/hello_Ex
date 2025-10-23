@@ -11,3 +11,9 @@ httpx==0.27.2
 chromadb==0.5.11
 sentence-transformers==3.2.1
 pymilvus==2.4.4
+transformers==4.44.2
+trl==0.9.6
+peft==0.12.0
+datasets==3.0.1
+accelerate==0.34.2
+bitsandbytes==0.43.3
